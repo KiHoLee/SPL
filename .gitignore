@@ -1,0 +1,4 @@
+*.pth
+data/
+*.log
+__pycache__/
