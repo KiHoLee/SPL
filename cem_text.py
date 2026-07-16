@@ -84,12 +84,15 @@ def encode_corpus(sents, stoi):
 
 # ------------------------------------------------------------ model
 class CEMText(nn.Module):
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size, mask_mode="soft"):
         super().__init__()
         self.V = vocab_size
         self.token_embedding = nn.Embedding(vocab_size, D, padding_idx=PAD)
         self.register_buffer("pe", sinusoidal_pe(T, D))
-        self.masks = nn.Parameter(torch.randn(U, D))
+        if mask_mode == "soft":
+            self.masks = nn.Parameter(torch.randn(U, D))
+        else:                       # "none": no user-specific masking
+            self.register_buffer("masks", torch.ones(U, D))
         enc = nn.TransformerEncoderLayer(D, NHEAD, dropout=0.0,
                                          batch_first=True, norm_first=True)
         self.encoder = nn.TransformerEncoder(enc, ENC_LAYERS)
@@ -179,10 +182,11 @@ def eval_bleu(model, data_ids, data_lens, snr_db, batches, batch, device,
     return scores / n
 
 
-def train_text(lam, data_ids, data_lens, steps, batch, lr, device, seed=42):
+def train_text(lam, data_ids, data_lens, steps, batch, lr, device,
+               mask_mode="soft", seed=42):
     torch.manual_seed(seed)
     V = int(max(data_ids.max().item() + 1, 2))
-    model = CEMText(V).to(device)
+    model = CEMText(V, mask_mode).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=lr)
     warmup = min(300, steps // 10)
 
@@ -231,6 +235,10 @@ def main():
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--eval-batches", type=int, default=40)
     ap.add_argument("--eval-batch", type=int, default=32)
+    ap.add_argument("--include-no-mask", action="store_true",
+                    help="also run the no-mask ablation (contrastive only)")
+    ap.add_argument("--only", nargs="*", default=None,
+                    help="subset of run names")
     args = ap.parse_args()
 
     device = get_device()
@@ -245,19 +253,34 @@ def main():
     print(f"vocab={len(stoi)+2} train={n_train} test={len(sents)-n_train}",
           flush=True)
 
+    configs = [("text_ce", 0.0, "soft"), ("text_nce0.01", 1e-2, "soft")]
+    if args.include_no_mask:
+        configs.append(("text_no_mask_nce0.01", 1e-2, "none"))
+
+    out_csv = os.path.join(HERE, "results", "results_bleu.csv")
+    os.makedirs(os.path.dirname(out_csv), exist_ok=True)
     rows = []
-    for name, lam in [("text_ce", 0.0), ("text_nce0.01", 1e-2)]:
-        print(f"=== training {name} ===", flush=True)
+    if os.path.exists(out_csv):          # resume: keep prior rows
+        with open(out_csv) as f:
+            rows = list(csv.DictReader(f))
+    done = {r["run"] for r in rows}
+
+    for name, lam, mask_mode in configs:
+        if args.only and name not in args.only:
+            continue
+        if name in done:
+            print(f"=== skip {name} (already in CSV) ===", flush=True)
+            continue
+        print(f"=== training {name} (mask={mask_mode}) ===", flush=True)
         model = train_text(lam, train_ids, train_lens, args.steps,
-                           args.batch, args.lr, device)
+                           args.batch, args.lr, device, mask_mode)
         torch.save(model.state_dict(), os.path.join(HERE, f"model_{name}.pth"))
         for snr in [10.0, 20.0]:
             b = eval_bleu(model, test_ids, test_lens, snr,
                           args.eval_batches, args.eval_batch, device)
             print(f">>> {name} @ {snr:.0f} dB : BLEU={b:.4f}", flush=True)
             rows.append(dict(run=name, snr_db=snr, BLEU=f"{b:.6f}"))
-            with open(os.path.join(HERE, "results_bleu.csv"), "w",
-                      newline="") as f:
+            with open(out_csv, "w", newline="") as f:
                 w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
                 w.writeheader()
                 w.writerows(rows)

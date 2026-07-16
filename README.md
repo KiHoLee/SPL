@@ -58,6 +58,12 @@ translates into semantic-level recovery (a 33-38% relative BLEU gain).
 
 `results/results_bleu.csv` contains the numbers reported in the letter.
 
+A no-mask ablation (user-specific masking disabled, contrastive term only)
+can be reproduced with `python cem_text.py --include-no-mask`. At the symbol
+level this configuration fails entirely (SER pinned near 0.56 at all SNRs;
+Sec. III-D of the letter), showing that the mask and the contrastive term
+are complementary.
+
 ## Requirements
 
 - Python >= 3.10, PyTorch >= 2.0 (CUDA or Apple MPS optional; CPU works)
