@@ -22,7 +22,21 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from cem_full import get_device, sinusoidal_pe
+def get_device():
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    if torch.backends.mps.is_available():
+        return torch.device("mps")
+    return torch.device("cpu")
+
+
+def sinusoidal_pe(t_len, dim):
+    pos = torch.arange(t_len).unsqueeze(1).float()
+    div = torch.exp(torch.arange(0, dim, 2).float() * (-math.log(10000.0) / dim))
+    pe = torch.zeros(t_len, dim)
+    pe[:, 0::2] = torch.sin(pos * div)
+    pe[:, 1::2] = torch.cos(pos * div)
+    return pe
 
 D = 128
 T = 32
