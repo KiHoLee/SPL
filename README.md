@@ -57,6 +57,7 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 | CE (mask only, U = 8) | 0.117 | 0.118 |
 | CE + NCE (U = 8, lambda = 1e-2) | 0.156 | 0.163 |
 | CE + NCE (U = 8, d = 256, lambda = 1e-2) | 0.976 | 0.986 |
+| CE + NCE (U = 8, d = 256, lambda = 1e-3) | 0.456 | 0.491 |
 
 The CE scheme's BLEU is flat in SNR, indicating an interference-limited
 regime; the contrastive term alleviates it, so embedding-level separation
@@ -72,7 +73,9 @@ than from the text model itself.
 
 The absolute BLEU is governed by the embedding capacity relative to the
 user load. Doubling the embedding dimension (`python cem_text.py --dim 256`)
-raises the BLEU at U = 8 to 0.976/0.986, close to the single-user level.
+raises the BLEU at U = 8 to 0.976/0.986, close to the single-user level. The same enlargement at the adopted weight lambda = 1e-3
+raises the U = 8 BLEU to 0.456/0.491, confirming the capacity trend
+reported in the response letter.
 
 A no-mask ablation (user-specific masking disabled, contrastive term only)
 can be reproduced with `python cem_text.py --include-no-mask`. At the symbol
