@@ -5,7 +5,7 @@ Code and evaluation script for the semantic task validation experiment
 
 > K.-H. Lee, H.-H. Choi, and J.-R. Lee, "Contrastive Embedding Multiplexing for
 > Multi-User Semantic Communication Systems," submitted to *IEEE Signal
-> Processing Letters* (manuscript SPL-47318-2026).
+> Processing Letters* (manuscript SPL-48226-2026).
 
 Contrastive embedding multiplexing (CEM) multiplexes several users in one
 shared embedding space: a user-specific positional mask assigns each user a
@@ -18,7 +18,7 @@ namely text transmission scored by BLEU.
 ## What the experiment does
 
 `cem_text.py` transmits English sentences from the Europarl corpus with
-`U = 8` users through the CEM pipeline (user-specific masking -> shared
+`U = 4` users (letter setting) through the CEM pipeline (user-specific masking -> shared
 Transformer encoder -> 1/U superposition -> Rayleigh fading + AWGN ->
 masked-query cross-attention decoding) and reports corpus-averaged sentence
 BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
@@ -30,7 +30,7 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 - Two configurations are trained under an identical protocol
   (8,000 steps, AdamW, per-batch SNR drawn uniformly from 0-25 dB):
   the CE scheme (mask only, `lambda = 0`) and the proposed CE + NCE scheme
-  (`lambda = 0.01`)
+  (`lambda = 0.001`, the operating value adopted in the letter)
 
 ## How to run
 
@@ -40,7 +40,9 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 2. Run:
 
    ```bash
-   python cem_text.py        # trains both configurations, then evaluates BLEU at 10 and 20 dB
+   python cem_text.py --users 4 --lam 0        # CE scheme (letter setting)
+   python cem_text.py --users 4 --lam 0.001    # proposed scheme (letter setting)
+   python cem_text.py                          # supplementary U = 8 pair (lambda = 0.01)
    ```
 
    Results are written to `results_bleu.csv`.
@@ -50,19 +52,27 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 | Scheme | BLEU @ 10 dB | BLEU @ 20 dB |
 |---|---|---|
 | Single-user reference (U = 1, CE) | 0.994 | 0.995 |
+| CE (mask only, U = 4) | 0.183 | 0.184 |
+| CE + NCE (proposed, U = 4, lambda = 1e-3) | **0.369** | **0.394** |
 | CE (mask only, U = 8) | 0.117 | 0.118 |
-| CE + NCE (proposed, U = 8) | **0.156** | **0.163** |
+| CE + NCE (U = 8, lambda = 1e-2) | 0.156 | 0.163 |
+| CE + NCE (U = 8, d = 256, lambda = 1e-2) | 0.976 | 0.986 |
 
 The CE scheme's BLEU is flat in SNR, indicating an interference-limited
 regime; the contrastive term alleviates it, so embedding-level separation
-translates into semantic-level recovery (a 33-38% relative BLEU gain).
+translates into semantic-level recovery (at the letter setting U = 4 the
+proposed scheme roughly doubles the BLEU).
 
 `results/results_bleu.csv` contains the numbers reported in the letter.
 
 The single-user interference-free reference can be reproduced with
 `python cem_text.py --users 1`. Its near-perfect BLEU shows that the
-lower scores at U = 8 come from inter-user interference rather than
-from the text model itself.
+lower scores at U = 4 and U = 8 come from inter-user interference rather
+than from the text model itself.
+
+The absolute BLEU is governed by the embedding capacity relative to the
+user load. Doubling the embedding dimension (`python cem_text.py --dim 256`)
+raises the BLEU at U = 8 to 0.976/0.986, close to the single-user level.
 
 A no-mask ablation (user-specific masking disabled, contrastive term only)
 can be reproduced with `python cem_text.py --include-no-mask`. At the symbol

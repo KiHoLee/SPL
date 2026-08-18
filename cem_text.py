@@ -239,12 +239,17 @@ def main():
                     help="also run the no-mask ablation (contrastive only)")
     ap.add_argument("--users", type=int, default=8,
                     help="number of multiplexed users U (default 8)")
+    ap.add_argument("--dim", type=int, default=128,
+                    help="embedding dimension d (default 128)")
+    ap.add_argument("--lam", type=float, default=None,
+                    help="override contrastive weight; runs a single soft-mask config")
     ap.add_argument("--only", nargs="*", default=None,
                     help="subset of run names")
     args = ap.parse_args()
 
-    global U
+    global U, D
     U = args.users
+    D = args.dim
 
     device = get_device()
     print(f"device={device}", flush=True)
@@ -258,8 +263,17 @@ def main():
     print(f"vocab={len(stoi)+2} train={n_train} test={len(sents)-n_train}",
           flush=True)
 
-    if U == 8:
+    if args.lam is not None:
+        name = "text_nce%g" % args.lam
+        if U != 8:
+            name += "_U%d" % U
+        if D != 128:
+            name += "_d%d" % D
+        configs = [(name, args.lam, "soft")]
+    elif U == 8 and D == 128:
         configs = [("text_ce", 0.0, "soft"), ("text_nce0.01", 1e-2, "soft")]
+    elif D != 128:
+        configs = [("text_nce0.01_U%d_d%d" % (U, D), 1e-2, "soft")]
     else:
         configs = [("text_ce_U%d" % U, 0.0, "soft")]
     if args.include_no_mask:
