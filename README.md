@@ -49,14 +49,20 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 
 | Scheme | BLEU @ 10 dB | BLEU @ 20 dB |
 |---|---|---|
-| CE (mask only) | 0.117 | 0.118 |
-| CE + NCE (proposed) | **0.156** | **0.163** |
+| Single-user reference (U = 1, CE) | 0.994 | 0.995 |
+| CE (mask only, U = 8) | 0.117 | 0.118 |
+| CE + NCE (proposed, U = 8) | **0.156** | **0.163** |
 
 The CE scheme's BLEU is flat in SNR, indicating an interference-limited
 regime; the contrastive term alleviates it, so embedding-level separation
 translates into semantic-level recovery (a 33-38% relative BLEU gain).
 
 `results/results_bleu.csv` contains the numbers reported in the letter.
+
+The single-user interference-free reference can be reproduced with
+`python cem_text.py --users 1`. Its near-perfect BLEU shows that the
+lower scores at U = 8 come from inter-user interference rather than
+from the text model itself.
 
 A no-mask ablation (user-specific masking disabled, contrastive term only)
 can be reproduced with `python cem_text.py --include-no-mask`. At the symbol

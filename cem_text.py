@@ -237,9 +237,14 @@ def main():
     ap.add_argument("--eval-batch", type=int, default=32)
     ap.add_argument("--include-no-mask", action="store_true",
                     help="also run the no-mask ablation (contrastive only)")
+    ap.add_argument("--users", type=int, default=8,
+                    help="number of multiplexed users U (default 8)")
     ap.add_argument("--only", nargs="*", default=None,
                     help="subset of run names")
     args = ap.parse_args()
+
+    global U
+    U = args.users
 
     device = get_device()
     print(f"device={device}", flush=True)
@@ -253,7 +258,10 @@ def main():
     print(f"vocab={len(stoi)+2} train={n_train} test={len(sents)-n_train}",
           flush=True)
 
-    configs = [("text_ce", 0.0, "soft"), ("text_nce0.01", 1e-2, "soft")]
+    if U == 8:
+        configs = [("text_ce", 0.0, "soft"), ("text_nce0.01", 1e-2, "soft")]
+    else:
+        configs = [("text_ce_U%d" % U, 0.0, "soft")]
     if args.include_no_mask:
         configs.append(("text_no_mask_nce0.01", 1e-2, "none"))
 
