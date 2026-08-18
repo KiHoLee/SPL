@@ -18,7 +18,7 @@ namely text transmission scored by BLEU.
 ## What the experiment does
 
 `cem_text.py` transmits English sentences from the Europarl corpus with
-`U = 4` users (letter setting) through the CEM pipeline (user-specific masking -> shared
+`U = 4` users (letter configuration) through the CEM pipeline (user-specific masking -> shared
 Transformer encoder -> 1/U superposition -> Rayleigh fading + AWGN ->
 masked-query cross-attention decoding) and reports corpus-averaged sentence
 BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
@@ -40,9 +40,9 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 2. Run:
 
    ```bash
-   python cem_text.py --users 4 --lam 0        # CE scheme (letter setting)
-   python cem_text.py --users 4 --lam 0.001    # proposed scheme (letter setting)
-   python cem_text.py                          # previous-setting U = 8 pair (lambda = 0.01)
+   python cem_text.py --users 4 --lam 0        # CE scheme (letter configuration)
+   python cem_text.py --users 4 --lam 0.001    # proposed scheme (letter configuration)
+   python cem_text.py                          # previous-configuration U = 8 pair (lambda = 0.01)
    ```
 
    Results are written to `results_bleu.csv`.
@@ -53,13 +53,13 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 |---|---|---|
 | Single-user reference (U = 1, CE) | 0.994 | 0.995 |
 | CE (mask only, U = 4) | 0.183 | 0.184 |
-| CE + NCE (proposed, U = 4, lambda = 1e-3, letter setting) | **0.369** | **0.394** |
-| CE (mask only, U = 8, previous setting) | 0.117 | 0.118 |
+| CE + NCE (proposed, U = 4, lambda = 1e-3, letter configuration) | **0.369** | **0.394** |
+| CE (mask only, U = 8, d = 128, previous configuration) | 0.117 | 0.118 |
 | CE + NCE (U = 8, d = 256, lambda = 1e-3) | 0.456 | 0.491 |
 
 The CE scheme's BLEU is flat in SNR, indicating an interference-limited
 regime; the contrastive term alleviates it, so embedding-level separation
-translates into semantic-level recovery (at the letter setting U = 4 the
+translates into semantic-level recovery (at the letter configuration U = 4 the
 proposed scheme roughly doubles the BLEU).
 
 `results/results_bleu.csv` contains the numbers reported in the letter.
