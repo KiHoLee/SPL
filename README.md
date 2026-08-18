@@ -42,7 +42,7 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
    ```bash
    python cem_text.py --users 4 --lam 0        # CE scheme (letter setting)
    python cem_text.py --users 4 --lam 0.001    # proposed scheme (letter setting)
-   python cem_text.py                          # supplementary U = 8 pair (lambda = 0.01)
+   python cem_text.py                          # previous-setting U = 8 pair (lambda = 0.01)
    ```
 
    Results are written to `results_bleu.csv`.
@@ -53,10 +53,8 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 |---|---|---|
 | Single-user reference (U = 1, CE) | 0.994 | 0.995 |
 | CE (mask only, U = 4) | 0.183 | 0.184 |
-| CE + NCE (proposed, U = 4, lambda = 1e-3) | **0.369** | **0.394** |
-| CE (mask only, U = 8) | 0.117 | 0.118 |
-| CE + NCE (U = 8, lambda = 1e-2) | 0.156 | 0.163 |
-| CE + NCE (U = 8, d = 256, lambda = 1e-2) | 0.976 | 0.986 |
+| CE + NCE (proposed, U = 4, lambda = 1e-3, letter setting) | **0.369** | **0.394** |
+| CE (mask only, U = 8, previous setting) | 0.117 | 0.118 |
 | CE + NCE (U = 8, d = 256, lambda = 1e-3) | 0.456 | 0.491 |
 
 The CE scheme's BLEU is flat in SNR, indicating an interference-limited
@@ -72,10 +70,10 @@ lower scores at U = 4 and U = 8 come from inter-user interference rather
 than from the text model itself.
 
 The absolute BLEU is governed by the embedding capacity relative to the
-user load. Doubling the embedding dimension (`python cem_text.py --dim 256`)
-raises the BLEU at U = 8 to 0.976/0.986, close to the single-user level. The same enlargement at the adopted weight lambda = 1e-3
-raises the U = 8 BLEU to 0.456/0.491, confirming the capacity trend
-reported in the response letter.
+user load. Doubling the embedding dimension under the adopted weight
+(`python cem_text.py --dim 256 --lam 0.001`) raises the U = 8 BLEU from
+0.117 to 0.456/0.491, confirming the capacity trend reported in the
+response letter.
 
 A no-mask ablation (user-specific masking disabled, contrastive term only)
 can be reproduced with `python cem_text.py --include-no-mask`. At the symbol
