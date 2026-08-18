@@ -52,7 +52,7 @@ BLEU-4 (add-one smoothing on the higher n-gram precisions) on a held-out
 | Scheme | BLEU @ 10 dB | BLEU @ 20 dB |
 |---|---|---|
 | Single-user reference (U = 1, CE) | 0.994 | 0.995 |
-| CE (mask only, U = 4) | 0.183 | 0.184 |
+| CE (mask only, U = 4, d = 128) | 0.183 | 0.184 |
 | CE + NCE (proposed, U = 4, d = 128, lambda = 1e-3, letter configuration) | **0.369** | **0.394** |
 | CE (mask only, U = 8, d = 128, previous configuration) | 0.117 | 0.118 |
 | CE + NCE (U = 8, d = 256, lambda = 1e-3) | 0.456 | 0.491 |
